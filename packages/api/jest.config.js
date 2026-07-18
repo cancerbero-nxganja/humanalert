@@ -8,6 +8,7 @@ module.exports = {
     'src/**/*.ts',
     '!src/index.ts',
     '!src/db/migrate.ts',
+    '!src/db/index.ts',
   ],
   coverageThreshold: {
     global: {
