@@ -6,6 +6,7 @@ import healthRouter from './routes/health';
 import feedbackRouter from './routes/feedback';
 import alertsRouter from './routes/alerts';
 import missingPersonsRouter from './routes/missing-persons';
+import animalAlertsRouter from './routes/animal-alerts';
 
 export function createApp(): express.Application {
   const app = express();
@@ -19,6 +20,7 @@ export function createApp(): express.Application {
   app.use('/api/v1/feedback', feedbackRouter);
   app.use('/api/v1/alerts', alertsRouter);
   app.use('/api/v1/missing-persons', missingPersonsRouter);
+  app.use('/api/v1/animal-alerts', animalAlertsRouter);
 
   app.use((_req, res) => {
     res.status(404).json({ error: 'Not found' });

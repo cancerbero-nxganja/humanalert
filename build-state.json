@@ -1,17 +1,17 @@
 {
-  "phase": "animal-alert",
-  "cycle": 3,
-  "last_completed": "busca-vida",
-  "completed_at": "2026-07-21T00:00:00Z",
+  "phase": "mapa-solidario",
+  "cycle": 4,
+  "last_completed": "animal-alert",
+  "completed_at": "2026-07-22T00:00:00Z",
   "coverage": {
-    "statements": 79.0,
-    "branches": 72.22,
-    "functions": 92.3,
-    "lines": 89.77
+    "statements": 81.69,
+    "branches": 75.75,
+    "functions": 93.33,
+    "lines": 91.08
   },
   "tests": {
-    "passed": 62,
+    "passed": 84,
     "failed": 0,
-    "total": 62
+    "total": 84
   }
 }
