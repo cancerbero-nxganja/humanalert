@@ -1,17 +1,17 @@
 {
-  "phase": "mapa-solidario",
-  "cycle": 4,
-  "last_completed": "animal-alert",
-  "completed_at": "2026-07-22T00:00:00Z",
+  "phase": "web-frontend",
+  "cycle": 5,
+  "last_completed": "mapa-solidario",
+  "completed_at": "2026-07-23T00:00:00Z",
   "coverage": {
-    "statements": 81.69,
-    "branches": 75.75,
-    "functions": 93.33,
-    "lines": 91.08
+    "statements": 83.38,
+    "branches": 76.02,
+    "functions": 94.44,
+    "lines": 92.74
   },
   "tests": {
-    "passed": 84,
+    "passed": 114,
     "failed": 0,
-    "total": 84
+    "total": 114
   }
 }
