@@ -1,17 +1,32 @@
 {
-  "phase": "web-frontend",
-  "cycle": 5,
-  "last_completed": "mapa-solidario",
-  "completed_at": "2026-07-23T00:00:00Z",
+  "phase": "docs",
+  "cycle": 6,
+  "last_completed": "web-frontend",
+  "completed_at": "2026-07-26T00:00:00Z",
   "coverage": {
-    "statements": 83.38,
-    "branches": 76.02,
-    "functions": 94.44,
-    "lines": 92.74
+    "api": {
+      "statements": 83.38,
+      "branches": 76.02,
+      "functions": 94.44,
+      "lines": 92.74
+    },
+    "web": {
+      "statements": 98.79,
+      "branches": 77.77,
+      "functions": 100,
+      "lines": 99.36
+    }
   },
   "tests": {
-    "passed": 114,
-    "failed": 0,
-    "total": 114
+    "api": {
+      "passed": 114,
+      "failed": 0,
+      "total": 114
+    },
+    "web": {
+      "passed": 63,
+      "failed": 0,
+      "total": 63
+    }
   }
 }
