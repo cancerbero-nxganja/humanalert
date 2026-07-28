@@ -299,4 +299,96 @@ describe('DELETE /api/v1/missing-persons/:id', () => {
 
     expect(res.status).toBe(404);
   });
+
+  it('returns 500 on DB error', async () => {
+    mockQuery.mockRejectedValueOnce(new Error('DB down'));
+
+    const res = await request(app)
+      .delete('/api/v1/missing-persons/mp-uuid-1')
+      .set('Authorization', `Bearer ${adminToken()}`);
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toBe('Internal server error');
+  });
+});
+
+describe('Error handling — 500 paths', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it('POST /api/v1/missing-persons returns 500 on DB error', async () => {
+    mockQuery.mockRejectedValueOnce(new Error('DB down'));
+
+    const res = await request(app)
+      .post('/api/v1/missing-persons')
+      .set('Authorization', `Bearer ${adminToken()}`)
+      .send(validPayload);
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toBe('Internal server error');
+  });
+
+  it('GET /api/v1/missing-persons returns 500 on DB error', async () => {
+    mockQuery.mockRejectedValueOnce(new Error('DB down'));
+
+    const res = await request(app).get('/api/v1/missing-persons');
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toBe('Internal server error');
+  });
+
+  it('GET /api/v1/missing-persons with geo filter returns 500 on DB error', async () => {
+    mockQuery.mockRejectedValueOnce(new Error('DB down'));
+
+    const res = await request(app).get('/api/v1/missing-persons?lat=40.7&lon=-74.0&radius_km=10');
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toBe('Internal server error');
+  });
+
+  it('GET /api/v1/missing-persons/:id returns 500 on DB error', async () => {
+    mockQuery.mockRejectedValueOnce(new Error('DB down'));
+
+    const res = await request(app).get('/api/v1/missing-persons/mp-uuid-1');
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toBe('Internal server error');
+  });
+
+  it('PUT /api/v1/missing-persons/:id returns 500 on DB error', async () => {
+    mockQuery.mockRejectedValueOnce(new Error('DB down'));
+
+    const res = await request(app)
+      .put('/api/v1/missing-persons/mp-uuid-1')
+      .set('Authorization', `Bearer ${adminToken()}`)
+      .send({ status: 'found' });
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toBe('Internal server error');
+  });
+
+  it('PUT /api/v1/missing-persons/:id with last_seen_location update covers branch', async () => {
+    const updated = { ...fakeRow, last_seen_lat: 51.5, last_seen_lon: -0.1 };
+    mockQuery.mockResolvedValueOnce({ rows: [updated], rowCount: 1 });
+
+    const res = await request(app)
+      .put('/api/v1/missing-persons/mp-uuid-1')
+      .set('Authorization', `Bearer ${adminToken()}`)
+      .send({ last_seen_location: { lat: 51.5, lon: -0.1 } });
+
+    expect(res.status).toBe(200);
+    expect(res.body.last_seen_location.lat).toBe(51.5);
+  });
+
+  it('PUT /api/v1/missing-persons/:id broadcasts missing_person:updated for non-found status', async () => {
+    const updated = { ...fakeRow, status: 'missing' };
+    mockQuery.mockResolvedValueOnce({ rows: [updated], rowCount: 1 });
+
+    const res = await request(app)
+      .put('/api/v1/missing-persons/mp-uuid-1')
+      .set('Authorization', `Bearer ${adminToken()}`)
+      .send({ language: 'es' });
+
+    expect(res.status).toBe(200);
+    expect(mockBroadcast).toHaveBeenCalledWith('missing_person:updated', expect.any(Object));
+  });
 });

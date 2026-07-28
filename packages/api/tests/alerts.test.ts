@@ -250,4 +250,83 @@ describe('DELETE /api/v1/alerts/:id', () => {
 
     expect(res.status).toBe(404);
   });
+
+  it('returns 500 on DB error', async () => {
+    mockQuery.mockRejectedValueOnce(new Error('DB down'));
+
+    const res = await request(app)
+      .delete('/api/v1/alerts/alert-uuid-1')
+      .set('Authorization', `Bearer ${adminToken()}`);
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toBe('Internal server error');
+  });
+});
+
+describe('Error handling — 500 paths', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it('POST /api/v1/alerts returns 500 on DB error', async () => {
+    mockQuery.mockRejectedValueOnce(new Error('DB down'));
+
+    const res = await request(app)
+      .post('/api/v1/alerts')
+      .set('Authorization', `Bearer ${adminToken()}`)
+      .send(validAlert);
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toBe('Internal server error');
+  });
+
+  it('GET /api/v1/alerts returns 500 on DB error', async () => {
+    mockQuery.mockRejectedValueOnce(new Error('DB down'));
+
+    const res = await request(app).get('/api/v1/alerts');
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toBe('Internal server error');
+  });
+
+  it('GET /api/v1/alerts with geo filter returns 500 on DB error', async () => {
+    mockQuery.mockRejectedValueOnce(new Error('DB down'));
+
+    const res = await request(app).get('/api/v1/alerts?lat=40.7&lon=-74.0&radius_km=10');
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toBe('Internal server error');
+  });
+
+  it('GET /api/v1/alerts/:id returns 500 on DB error', async () => {
+    mockQuery.mockRejectedValueOnce(new Error('DB down'));
+
+    const res = await request(app).get('/api/v1/alerts/alert-uuid-1');
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toBe('Internal server error');
+  });
+
+  it('PUT /api/v1/alerts/:id returns 500 on DB error', async () => {
+    mockQuery.mockRejectedValueOnce(new Error('DB down'));
+
+    const res = await request(app)
+      .put('/api/v1/alerts/alert-uuid-1')
+      .set('Authorization', `Bearer ${adminToken()}`)
+      .send({ severity: 'critical' });
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toBe('Internal server error');
+  });
+
+  it('PUT /api/v1/alerts/:id with location update covers location branch', async () => {
+    const updated = { ...fakeAlertRow, lat: 51.5, lon: -0.1 };
+    mockQuery.mockResolvedValueOnce({ rows: [updated], rowCount: 1 });
+
+    const res = await request(app)
+      .put('/api/v1/alerts/alert-uuid-1')
+      .set('Authorization', `Bearer ${adminToken()}`)
+      .send({ location: { lat: 51.5, lon: -0.1 } });
+
+    expect(res.status).toBe(200);
+    expect(res.body.lat).toBe(51.5);
+  });
 });
