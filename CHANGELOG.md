@@ -4,6 +4,19 @@ All notable changes to HumanAlert are documented here.
 
 ## [Unreleased]
 
+## [0.8.0] — 2026-07-29
+
+### Improved
+- MEJORA CONTINUA cycle 9: branch coverage improvement across API routes
+- Added 6 new targeted tests for update field branches in alerts, missing-persons, and map-pins
+- Covered geo+category filter branch in map-pins GET
+- Covered POST missing-person without optional fields (physical_description, location.description)
+- API tests: 135 passed (was 129), zero failures
+
+### Coverage
+- API: 97.31% statements, 97.66% branches, 94.44% functions, 97.90% lines (was 88.75%/79.53%)
+- Web: 98.79% statements, 77.77% branches, 100% functions, 99.36% lines (unchanged)
+
 ## [0.7.0] — 2026-07-27
 
 ### Added

@@ -182,6 +182,16 @@ describe('GET /api/v1/map-pins', () => {
     expect(Array.isArray(res.body)).toBe(true);
   });
 
+  it('returns geo results filtered by category', async () => {
+    mockQuery.mockResolvedValueOnce({ rows: [fakePin], rowCount: 1 });
+
+    const res = await request(app)
+      .get('/api/v1/map-pins?lat=40.7128&lon=-74.006&radius_km=10&category=shelter');
+
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+  });
+
   it('returns 400 for invalid geo param', async () => {
     const res = await request(app)
       .get('/api/v1/map-pins?lat=999&lon=0&radius_km=5');
@@ -289,6 +299,45 @@ describe('PUT /api/v1/map-pins/:id', () => {
       .send({ title: 'New title' });
 
     expect(res.status).toBe(404);
+  });
+
+  it('updates all map pin fields covers all field branches', async () => {
+    const updated = {
+      ...fakePin,
+      category: 'food',
+      description: 'Updated desc',
+      lat: 51.5,
+      lon: -0.1,
+      language: 'fr',
+      expires_at: '2026-12-31T00:00:00.000Z',
+    };
+    mockQuery.mockResolvedValueOnce({ rows: [updated], rowCount: 1 });
+
+    const res = await request(app)
+      .put('/api/v1/map-pins/pin-uuid-1')
+      .set('Authorization', `Bearer ${makeAdminToken()}`)
+      .send({
+        category: 'food',
+        description: 'Updated desc',
+        lat: 51.5,
+        lon: -0.1,
+        language: 'fr',
+        expires_at: '2026-12-31T00:00:00.000Z',
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.category).toBe('food');
+  });
+
+  it('returns 500 on db error during update', async () => {
+    mockQuery.mockRejectedValueOnce(new Error('DB error'));
+
+    const res = await request(app)
+      .put('/api/v1/map-pins/pin-uuid-1')
+      .set('Authorization', `Bearer ${makeAdminToken()}`)
+      .send({ title: 'Title' });
+
+    expect(res.status).toBe(500);
   });
 });
 

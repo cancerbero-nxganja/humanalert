@@ -263,6 +263,43 @@ describe('DELETE /api/v1/alerts/:id', () => {
   });
 });
 
+describe('PUT /api/v1/alerts/:id — full field coverage', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it('updates all updatable fields covers all field branches', async () => {
+    const updated = {
+      ...fakeAlertRow,
+      type: 'community',
+      status: 'active',
+      title: 'Updated title',
+      description: 'Updated desc',
+      lat: 51.5,
+      lon: -0.1,
+      radius_km: 5,
+      language: 'es',
+      expires_at: '2026-12-31T00:00:00.000Z',
+    };
+    mockQuery.mockResolvedValueOnce({ rows: [updated], rowCount: 1 });
+
+    const res = await request(app)
+      .put('/api/v1/alerts/alert-uuid-1')
+      .set('Authorization', `Bearer ${adminToken()}`)
+      .send({
+        type: 'community',
+        status: 'active',
+        title: 'Updated title',
+        description: 'Updated desc',
+        location: { lat: 51.5, lon: -0.1 },
+        radius_km: 5,
+        language: 'es',
+        expires_at: '2026-12-31T00:00:00.000Z',
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.type).toBe('community');
+  });
+});
+
 describe('Error handling — 500 paths', () => {
   beforeEach(() => jest.clearAllMocks());
 
@@ -329,4 +366,5 @@ describe('Error handling — 500 paths', () => {
     expect(res.status).toBe(200);
     expect(res.body.lat).toBe(51.5);
   });
+
 });

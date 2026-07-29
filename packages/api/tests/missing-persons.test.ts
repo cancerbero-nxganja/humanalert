@@ -123,6 +123,29 @@ describe('POST /api/v1/missing-persons', () => {
     expect(res.body.error).toBe('Validation failed');
   });
 
+  it('creates missing person without optional fields covers null branches', async () => {
+    const minimal = { ...fakeRow, physical_description: null, last_seen_location_desc: null, photo_hash: null };
+    mockQuery.mockResolvedValueOnce({ rows: [minimal], rowCount: 1 });
+
+    const res = await request(app)
+      .post('/api/v1/missing-persons')
+      .set('Authorization', `Bearer ${adminToken()}`)
+      .send({
+        first_name: 'Ana',
+        last_name_initial: 'M',
+        age_range_min: 5,
+        age_range_max: 8,
+        gender: 'male',
+        last_seen_at: '2026-07-20T10:00:00.000Z',
+        last_seen_location: { lat: 40.7, lon: -74.0 },
+        contact_hash: 'sha256:xyz',
+        amber_alert: false,
+        language: 'es',
+      });
+
+    expect(res.status).toBe(201);
+  });
+
   it('returns 400 when age_range_max < age_range_min', async () => {
     const res = await request(app)
       .post('/api/v1/missing-persons')
@@ -390,5 +413,45 @@ describe('Error handling — 500 paths', () => {
 
     expect(res.status).toBe(200);
     expect(mockBroadcast).toHaveBeenCalledWith('missing_person:updated', expect.any(Object));
+  });
+
+  it('PUT /api/v1/missing-persons/:id with all updatable fields covers all branches', async () => {
+    const updated = {
+      ...fakeRow,
+      first_name: 'Ana',
+      last_name_initial: 'M',
+      age_range_min: 15,
+      age_range_max: 20,
+      gender: 'male',
+      physical_description: 'Updated desc',
+      last_seen_at: new Date('2026-07-21T10:00:00.000Z'),
+      photo_hash: 'sha256:new',
+      contact_hash: 'sha256:new2',
+      amber_alert: false,
+      language: 'fr',
+      expires_at: '2026-12-31T00:00:00.000Z',
+    };
+    mockQuery.mockResolvedValueOnce({ rows: [updated], rowCount: 1 });
+
+    const res = await request(app)
+      .put('/api/v1/missing-persons/mp-uuid-1')
+      .set('Authorization', `Bearer ${adminToken()}`)
+      .send({
+        first_name: 'Ana',
+        last_name_initial: 'M',
+        age_range_min: 15,
+        age_range_max: 20,
+        gender: 'male',
+        physical_description: 'Updated desc',
+        last_seen_at: '2026-07-21T10:00:00.000Z',
+        photo_hash: 'sha256:new',
+        contact_hash: 'sha256:new2',
+        amber_alert: false,
+        language: 'fr',
+        expires_at: '2026-12-31T00:00:00.000Z',
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.first_name).toBe('Ana');
   });
 });
