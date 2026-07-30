@@ -147,6 +147,55 @@ describe('FeedbackWidget', () => {
     expect(onComplete).toHaveBeenCalledTimes(1);
   });
 
+  it('uses default English labels when no language prop given', () => {
+    render(<FeedbackWidget context="test_ctx" />);
+    expect(screen.getByLabelText('Was this helpful?')).toBeInTheDocument();
+  });
+
+  it('uses className prop when provided', () => {
+    render(<FeedbackWidget context="test_ctx" language="en" className="my-custom-class" />);
+    const aside = screen.getByRole('complementary');
+    expect(aside.className).toContain('my-custom-class');
+  });
+
+  it('falls back to English labels for unknown language', () => {
+    render(<FeedbackWidget context="test_ctx" language="xx" />);
+    expect(screen.getByLabelText('Was this helpful?')).toBeInTheDocument();
+  });
+
+  it('calls onComplete when offline and feedback enqueued', async () => {
+    (navigator as { onLine: boolean }).onLine = false;
+    const onComplete = jest.fn();
+    render(<FeedbackWidget context="test_ctx" language="en" onComplete={onComplete} />);
+    fireEvent.click(screen.getByLabelText('Thumbs up — helpful'));
+    await screen.findByPlaceholderText('Tell us more (optional)');
+
+    await act(async () => {
+      fireEvent.click(screen.getByLabelText('Skip'));
+    });
+
+    expect(mockEnqueue).toHaveBeenCalled();
+    expect(onComplete).toHaveBeenCalledTimes(1);
+  });
+
+  it('submits form with empty message sending undefined for message', async () => {
+    mockPost.mockResolvedValueOnce(true);
+    render(<FeedbackWidget context="test_ctx" language="en" />);
+    fireEvent.click(screen.getByLabelText('Thumbs up — helpful'));
+    await screen.findByPlaceholderText('Tell us more (optional)');
+
+    await act(async () => {
+      fireEvent.click(screen.getByLabelText('Send'));
+    });
+
+    expect(mockPost).toHaveBeenCalledWith(
+      expect.objectContaining({ rating: 'thumbs-up' })
+    );
+    const call = mockPost.mock.calls[0][0];
+    expect(call.message).toBeUndefined();
+    expect(await screen.findByRole('status')).toHaveTextContent('Thank you!');
+  });
+
   it('max two interaction steps before done', async () => {
     mockPost.mockResolvedValueOnce(true);
     render(<FeedbackWidget context="test_ctx" language="en" />);

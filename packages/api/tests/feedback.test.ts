@@ -152,3 +152,60 @@ describe('GET /api/v1/health', () => {
     expect(res.body.status).toBe('ok');
   });
 });
+
+describe('POST /api/v1/feedback — DB error path', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it('returns 500 when DB insert fails', async () => {
+    mockQuery.mockRejectedValueOnce(new Error('DB connection lost'));
+
+    const res = await request(app)
+      .post('/api/v1/feedback')
+      .send(validFeedbackPayload)
+      .set('Content-Type', 'application/json');
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toBe('Internal server error');
+  });
+});
+
+describe('GET /api/v1/feedback — DB error path', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it('returns 500 when DB query fails', async () => {
+    mockQuery.mockRejectedValueOnce(new Error('DB timeout'));
+
+    const res = await request(app)
+      .get('/api/v1/feedback')
+      .set('Authorization', `Bearer ${makeAdminToken()}`);
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toBe('Internal server error');
+  });
+});
+
+describe('requireAdmin — missing JWT_SECRET', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it('returns 500 when JWT_SECRET env var is not set', async () => {
+    const originalSecret = process.env.JWT_SECRET;
+    delete process.env.JWT_SECRET;
+
+    const token = jwt.sign({ sub: 'admin-1', role: 'admin' }, originalSecret as string);
+    const res = await request(app)
+      .get('/api/v1/feedback')
+      .set('Authorization', `Bearer ${token}`);
+
+    process.env.JWT_SECRET = originalSecret;
+    expect(res.status).toBe(500);
+    expect(res.body.error).toBe('Server configuration error');
+  });
+});
+
+describe('404 handler', () => {
+  it('returns 404 for unknown routes', async () => {
+    const res = await request(app).get('/api/v1/nonexistent-route');
+    expect(res.status).toBe(404);
+    expect(res.body.error).toBe('Not found');
+  });
+});

@@ -111,4 +111,17 @@ describe('attachWsServer and client messaging', () => {
       }
     });
   });
+
+  it('removes client from set on ws error event', (done) => {
+    const ws = new WebSocket(serverUrl);
+    ws.on('open', () => {
+      expect(getConnectedCount()).toBe(1);
+      // Destroy the underlying TCP socket to trigger an error on the server-side WebSocket
+      (ws as unknown as { _socket: { destroy: () => void } })._socket.destroy();
+      setTimeout(() => {
+        expect(getConnectedCount()).toBe(0);
+        done();
+      }, 100);
+    });
+  });
 });

@@ -4,6 +4,18 @@ All notable changes to HumanAlert are documented here.
 
 ## [Unreleased]
 
+## [0.9.0] — 2026-07-30
+
+### Improved
+- MEJORA CONTINUA cycle 10: comprehensive coverage improvement across API and web packages
+- API: +9 new tests covering 404 handler, JWT_SECRET missing (500 path), DB error paths for feedback POST/GET, animal-alerts GET/:id and PATCH/:id/status, alerts with expires_at field, animal-alerts description/language update fields
+- Web: +13 new tests covering OfflineBanner default language + unknown language fallback, LanguageSwitcher undefined locale fallback, API params branches for getMissingPersons/getAnimalAlerts/getMapPins, NEXT_PUBLIC_API_URL env branch, offlineQueue malformed JSON, FeedbackWidget default props + className + offline+onComplete + empty message submit
+
+### Coverage
+- API: 99.83% statements, 99.41% branches, 97.22% functions, 100% lines (was 97.31%/97.66%/94.44%/97.90%)
+- Web: 99.39% statements, 95.23% branches, 100% functions, 100% lines (was 98.79%/77.77%/100%/99.36%)
+- Total tests: 220 (API: 144, Web: 76), zero failures
+
 ## [0.8.0] — 2026-07-29
 
 ### Improved

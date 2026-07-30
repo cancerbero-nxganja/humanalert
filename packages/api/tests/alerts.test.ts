@@ -110,6 +110,20 @@ describe('POST /api/v1/alerts', () => {
       .send({ ...validAlert, location: { lat: 91, lon: 0 } });
     expect(res.status).toBe(400);
   });
+
+  it('creates alert with expires_at field set', async () => {
+    const expiresAt = new Date(Date.now() + 86400000).toISOString();
+    const rowWithExpiry = { ...fakeAlertRow, expires_at: expiresAt };
+    mockQuery.mockResolvedValueOnce({ rows: [rowWithExpiry], rowCount: 1 });
+
+    const res = await request(app)
+      .post('/api/v1/alerts')
+      .set('Authorization', `Bearer ${adminToken()}`)
+      .send({ ...validAlert, expires_at: expiresAt });
+
+    expect(res.status).toBe(201);
+    expect(res.body.expires_at).toBe(expiresAt);
+  });
 });
 
 describe('GET /api/v1/alerts', () => {

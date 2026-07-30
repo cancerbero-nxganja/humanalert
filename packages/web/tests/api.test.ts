@@ -79,6 +79,13 @@ describe('api', () => {
       (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: false });
       await expect(getMissingPersons()).rejects.toThrow('Failed to fetch missing persons');
     });
+
+    it('appends query params', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: true, json: () => Promise.resolve([]) });
+      await getMissingPersons({ amber_only: 'true' });
+      const url = (global.fetch as jest.Mock).mock.calls[0][0];
+      expect(url).toContain('amber_only=true');
+    });
   });
 
   describe('getAnimalAlerts', () => {
@@ -92,6 +99,13 @@ describe('api', () => {
       (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: false });
       await expect(getAnimalAlerts()).rejects.toThrow('Failed to fetch animal alerts');
     });
+
+    it('appends query params', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: true, json: () => Promise.resolve([]) });
+      await getAnimalAlerts({ status: 'FOUND' });
+      const url = (global.fetch as jest.Mock).mock.calls[0][0];
+      expect(url).toContain('status=FOUND');
+    });
   });
 
   describe('getMapPins', () => {
@@ -104,6 +118,24 @@ describe('api', () => {
     it('throws on failure', async () => {
       (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: false });
       await expect(getMapPins()).rejects.toThrow('Failed to fetch map pins');
+    });
+
+    it('appends query params', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: true, json: () => Promise.resolve([]) });
+      await getMapPins({ category: 'shelter' });
+      const url = (global.fetch as jest.Mock).mock.calls[0][0];
+      expect(url).toContain('category=shelter');
+    });
+  });
+
+  describe('API_BASE env fallback', () => {
+    it('uses NEXT_PUBLIC_API_URL when set', async () => {
+      process.env.NEXT_PUBLIC_API_URL = 'http://custom-api.example.com';
+      jest.resetModules();
+      const { API_BASE } = await import('@/lib/api');
+      expect(API_BASE).toBe('http://custom-api.example.com');
+      delete process.env.NEXT_PUBLIC_API_URL;
+      jest.resetModules();
     });
   });
 });

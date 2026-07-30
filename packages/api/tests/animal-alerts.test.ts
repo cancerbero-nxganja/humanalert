@@ -215,6 +215,15 @@ describe('GET /api/v1/animal-alerts/:id', () => {
     expect(res.status).toBe(404);
     expect(res.body.error).toBe('Animal alert not found');
   });
+
+  it('returns 500 on db error', async () => {
+    mockQuery.mockRejectedValueOnce(new Error('DB connection lost'));
+
+    const res = await request(app).get('/api/v1/animal-alerts/some-id');
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toBe('Internal server error');
+  });
 });
 
 describe('PATCH /api/v1/animal-alerts/:id/status', () => {
@@ -278,5 +287,31 @@ describe('PATCH /api/v1/animal-alerts/:id/status', () => {
 
     expect(res.status).toBe(400);
     expect(res.body.error).toBe('No fields to update');
+  });
+
+  it('returns 500 on db error during update', async () => {
+    mockQuery.mockResolvedValueOnce({ rows: [fakeRow], rowCount: 1 });
+    mockQuery.mockRejectedValueOnce(new Error('DB write failed'));
+
+    const res = await request(app)
+      .patch('/api/v1/animal-alerts/animal-uuid-1/status')
+      .send({ status: 'FOUND', contact_hash: 'sha256:abc123def456' });
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toBe('Internal server error');
+  });
+
+  it('updates description and language fields', async () => {
+    const updatedRow = { ...fakeRow, description: 'Updated desc', language: 'es' };
+    mockQuery.mockResolvedValueOnce({ rows: [fakeRow], rowCount: 1 });
+    mockQuery.mockResolvedValueOnce({ rows: [updatedRow], rowCount: 1 });
+
+    const res = await request(app)
+      .patch('/api/v1/animal-alerts/animal-uuid-1/status')
+      .send({ description: 'Updated desc', language: 'es', contact_hash: 'sha256:abc123def456' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.description).toBe('Updated desc');
+    expect(res.body.language).toBe('es');
   });
 });

@@ -10,6 +10,11 @@ describe('offlineQueue', () => {
     expect(getQueue()).toEqual([]);
   });
 
+  it('returns empty array when localStorage has malformed JSON', () => {
+    localStorage.setItem('humanalert_feedback_queue', 'not-valid-json{{{');
+    expect(getQueue()).toEqual([]);
+  });
+
   it('enqueues an item', () => {
     const item = enqueue({ source: 'web', context: 'test', rating: 'thumbs-up', language: 'en' });
     const queue = getQueue();

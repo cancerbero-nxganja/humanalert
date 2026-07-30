@@ -3,20 +3,16 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 
-const mockPush = jest.fn();
+jest.mock('next/router', () => ({ useRouter: jest.fn() }));
+import { useRouter } from 'next/router';
+const mockUseRouter = useRouter as jest.Mock;
 
-jest.mock('next/router', () => ({
-  useRouter: () => ({
-    locale: 'en',
-    pathname: '/',
-    asPath: '/',
-    push: mockPush,
-  }),
-}));
+const mockPush = jest.fn();
 
 describe('LanguageSwitcher', () => {
   beforeEach(() => {
     mockPush.mockClear();
+    mockUseRouter.mockReturnValue({ locale: 'en', pathname: '/', asPath: '/', push: mockPush });
   });
 
   it('renders a select element with language options', () => {
@@ -53,5 +49,12 @@ describe('LanguageSwitcher', () => {
   it('shows Chinese option', () => {
     render(<LanguageSwitcher />);
     expect(screen.getByText('中文')).toBeInTheDocument();
+  });
+
+  it('falls back to en when router.locale is undefined', () => {
+    mockUseRouter.mockReturnValueOnce({ locale: undefined, pathname: '/', asPath: '/', push: mockPush });
+    render(<LanguageSwitcher />);
+    const select = screen.getByRole('combobox') as HTMLSelectElement;
+    expect(select.value).toBe('en');
   });
 });

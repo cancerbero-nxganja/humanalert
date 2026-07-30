@@ -34,6 +34,18 @@ describe('OfflineBanner', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('غير متصل');
   });
 
+  it('uses default English when no language prop is given', () => {
+    (navigator as { onLine: boolean }).onLine = false;
+    render(<OfflineBanner />);
+    expect(screen.getByRole('alert')).toHaveTextContent('offline');
+  });
+
+  it('falls back to English for unknown language code', () => {
+    (navigator as { onLine: boolean }).onLine = false;
+    render(<OfflineBanner language="xx" />);
+    expect(screen.getByRole('alert')).toHaveTextContent('offline');
+  });
+
   it('shows online→offline change via online event', async () => {
     (navigator as { onLine: boolean }).onLine = true;
     const { rerender } = render(<OfflineBanner language="en" />);
