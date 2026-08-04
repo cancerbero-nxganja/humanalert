@@ -4,6 +4,19 @@ All notable changes to HumanAlert are documented here.
 
 ## [Unreleased]
 
+## [1.0.0] — 2026-08-04
+
+### Improved
+- MEJORA CONTINUA cycle 11: coverage improvement targeting remaining branch and function gaps
+- API: +1 test — malformed WebSocket frame triggers server-side ws.on('error') handler; broadcast.ts now 100% functions (was 87.5%)
+- Web: +2 tests — SSR guard branch in offlineQueue.ts (window undefined, via jest-environment node); navigator-undefined branch in useOnlineStatus.ts covered via Object.defineProperty; hooks and lib modules now 100% branch coverage
+- Remaining accepted gaps: alerts.ts line 25 (req.user?.sub ?? null, defensive code behind requireAdmin guarantee); FeedbackWidget.tsx line 42 (SSR navigator guard in client-only component, untestable in jsdom without cross-test contamination)
+
+### Coverage
+- API: 100% statements, 99.41% branches, 100% functions, 100% lines (functions up from 97.22%)
+- Web: 100% statements, 98.41% branches, 100% functions, 100% lines (branches up from 95.23%)
+- Total tests: 223 (API: 145, Web: 78), zero failures
+
 ## [0.9.0] — 2026-07-30
 
 ### Improved

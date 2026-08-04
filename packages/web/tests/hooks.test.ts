@@ -17,7 +17,19 @@ const mockFlushQueue = flushQueue as jest.Mock;
 
 describe('useOnlineStatus', () => {
   afterEach(() => {
+    const nav = (global as { _navigatorBackup?: Navigator })._navigatorBackup;
+    if (nav !== undefined) {
+      Object.defineProperty(global, 'navigator', { value: nav, configurable: true, writable: true });
+      delete (global as { _navigatorBackup?: Navigator })._navigatorBackup;
+    }
     (navigator as { onLine: boolean }).onLine = true;
+  });
+
+  it('defaults to true when navigator is undefined (SSR guard)', () => {
+    (global as { _navigatorBackup?: Navigator })._navigatorBackup = global.navigator;
+    Object.defineProperty(global, 'navigator', { value: undefined, configurable: true, writable: true });
+    const { result } = renderHook(() => useOnlineStatus());
+    expect(result.current).toBe(true);
   });
 
   it('returns true when online', () => {

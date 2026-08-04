@@ -124,4 +124,23 @@ describe('attachWsServer and client messaging', () => {
       }, 100);
     });
   });
+
+  it('removes client on ws protocol error (malformed frame triggers error handler)', (done) => {
+    const ws = new WebSocket(serverUrl);
+    ws.on('open', () => {
+      expect(getConnectedCount()).toBe(1);
+      // Send a WebSocket frame with RSV bits set — a protocol violation that causes
+      // the ws library to emit 'error' on the server-side socket, exercising the
+      // ws.on('error', ...) cleanup handler in broadcast.ts.
+      // Frame: FIN=1, RSV2=1, RSV3=1 (0xb0), MASK=1 len=0 (0x80), 4-byte mask key (zeros)
+      (ws as unknown as { _socket: { write: (b: Buffer) => void } })._socket.write(
+        Buffer.from([0xb0, 0x80, 0x00, 0x00, 0x00, 0x00])
+      );
+      setTimeout(() => {
+        expect(getConnectedCount()).toBe(0);
+        done();
+      }, 150);
+    });
+    ws.on('error', () => {}); // suppress client-side error noise
+  });
 });
