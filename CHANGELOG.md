@@ -4,6 +4,22 @@ All notable changes to HumanAlert are documented here.
 
 ## [Unreleased]
 
+## [1.1.0] — 2026-08-13
+
+### Security
+- CORS origin restriction: `CORS_ORIGINS` env var (comma-separated) lets operators lock down allowed origins in production; defaults to `*` for development backward compatibility
+- `app.ts` CORS logic fully tested: 5 new tests cover wildcard mode, restricted mode (allowed/blocked/no-origin), and explicit-wildcard mode
+
+### Improved
+- MEJORA CONTINUA cycle 12: security audit — configurable CORS origins
+- API tests: +5 (CORS) → 150 total, zero failures
+- `app.ts` branches: 100% (was part of untracked global gap; now explicitly verified)
+
+### Coverage
+- API: 100% statements, 99.44% branches, 100% functions, 100% lines
+- Web: 100% statements, 98.41% branches, 100% functions, 100% lines (unchanged)
+- Total tests: 228 (API: 150, Web: 78), zero failures
+
 ## [1.0.0] — 2026-08-04
 
 ### Improved

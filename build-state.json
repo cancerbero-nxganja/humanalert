@@ -1,12 +1,12 @@
 {
   "phase": "continuous-improvement",
-  "cycle": 11,
-  "last_completed": "coverage-improvement-cycle11",
-  "completed_at": "2026-08-04T00:00:00Z",
+  "cycle": 12,
+  "last_completed": "security-cors-cycle12",
+  "completed_at": "2026-08-13T00:00:00Z",
   "coverage": {
     "api": {
       "statements": 100,
-      "branches": 99.41,
+      "branches": 99.44,
       "functions": 100,
       "lines": 100
     },
@@ -19,9 +19,9 @@
   },
   "tests": {
     "api": {
-      "passed": 145,
+      "passed": 150,
       "failed": 0,
-      "total": 145
+      "total": 150
     },
     "web": {
       "passed": 78,

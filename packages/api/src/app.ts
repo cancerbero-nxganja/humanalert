@@ -9,11 +9,29 @@ import missingPersonsRouter from './routes/missing-persons';
 import animalAlertsRouter from './routes/animal-alerts';
 import mapPinsRouter from './routes/map-pins';
 
+function buildCorsOptions(): cors.CorsOptions {
+  const raw = process.env.CORS_ORIGINS ?? '';
+  if (!raw || raw === '*') {
+    return { origin: '*' };
+  }
+  const allowed = new Set(raw.split(',').map(o => o.trim()).filter(Boolean));
+  return {
+    origin: (origin, callback) => {
+      if (!origin || allowed.has(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error(`CORS: origin ${origin} not allowed`));
+      }
+    },
+    credentials: true,
+  };
+}
+
 export function createApp(): express.Application {
   const app = express();
 
   app.use(helmet());
-  app.use(cors());
+  app.use(cors(buildCorsOptions()));
   app.use(express.json({ limit: '50kb' }));
   app.use(globalRateLimiter);
 
