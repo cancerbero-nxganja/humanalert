@@ -184,6 +184,48 @@ describe('GET /api/v1/feedback — DB error path', () => {
   });
 });
 
+describe('GET /api/v1/feedback/summary', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it('returns 401 without auth', async () => {
+    const res = await request(app).get('/api/v1/feedback/summary');
+    expect(res.status).toBe(401);
+  });
+
+  it('returns summary with valid admin JWT', async () => {
+    mockQuery
+      .mockResolvedValueOnce({ rows: [{ total: '42' }], rowCount: 1 })
+      .mockResolvedValueOnce({
+        rows: [
+          { context: 'home_page', count: '30', avg_rating: '4.50' },
+          { context: 'alert_sent', count: '12', avg_rating: null },
+        ],
+        rowCount: 2,
+      });
+
+    const res = await request(app)
+      .get('/api/v1/feedback/summary')
+      .set('Authorization', `Bearer ${makeAdminToken()}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.total).toBe(42);
+    expect(Array.isArray(res.body.by_context)).toBe(true);
+    expect(res.body.by_context[0]).toMatchObject({ context: 'home_page', count: 30, avg_rating: 4.5 });
+    expect(res.body.by_context[1].avg_rating).toBeNull();
+  });
+
+  it('returns 500 when DB fails', async () => {
+    mockQuery.mockRejectedValueOnce(new Error('DB timeout'));
+
+    const res = await request(app)
+      .get('/api/v1/feedback/summary')
+      .set('Authorization', `Bearer ${makeAdminToken()}`);
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toBe('Internal server error');
+  });
+});
+
 describe('requireAdmin — missing JWT_SECRET', () => {
   beforeEach(() => jest.clearAllMocks());
 

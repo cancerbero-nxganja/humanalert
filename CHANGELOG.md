@@ -4,6 +4,25 @@ All notable changes to HumanAlert are documented here.
 
 ## [Unreleased]
 
+## [1.2.0] — 2026-08-16
+
+### Added
+- `GET /api/v1/feedback/summary` (admin-protected): aggregated feedback analytics — total count and per-context breakdown with average numeric rating; feeds the mejora continua roadmap loop
+- 3 new tests: summary 401 without auth, summary returns correct aggregated shape, summary DB error → 500
+
+### Fixed
+- `@testing-library/dom` added to web package devDependencies (was missing, caused 5 test suites to fail on fresh install)
+
+### Improved
+- MEJORA CONTINUA cycle 13: feedback analytics endpoint + dependency fix
+- API tests: +3 (feedback summary) → 153 total, zero failures
+- Web tests: 78 total (all suites now resolve on fresh install)
+
+### Coverage
+- API: 100% statements, 99.45% branches, 100% functions, 100% lines
+- Web: 100% statements, 98.41% branches, 100% functions, 100% lines (unchanged)
+- Total tests: 231 (API: 153, Web: 78), zero failures
+
 ## [1.1.0] — 2026-08-13
 
 ### Security
