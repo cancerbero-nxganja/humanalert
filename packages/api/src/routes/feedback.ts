@@ -1,9 +1,14 @@
 import { Router, Request, Response } from 'express';
+import { createHash } from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
 import { feedbackRateLimiter } from '../middleware/rateLimiter';
 import { requireAdmin } from '../middleware/auth';
 import { CreateFeedbackSchema } from '../validators/feedback';
 import { query } from '../db';
+
+function hashEmail(email: string): string {
+  return createHash('sha256').update(email.toLowerCase().trim()).digest('hex');
+}
 
 const router = Router();
 
@@ -22,7 +27,7 @@ router.post('/', feedbackRateLimiter, async (req: Request, res: Response): Promi
       `INSERT INTO feedback (id, source, context, rating, message, email, language, created_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
        RETURNING *`,
-      [id, source, context, String(rating), message ?? null, email ?? null, language]
+      [id, source, context, String(rating), message ?? null, email ? hashEmail(email) : null, language]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {

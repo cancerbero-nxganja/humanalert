@@ -4,6 +4,20 @@ All notable changes to HumanAlert are documented here.
 
 ## [Unreleased]
 
+## [1.3.0] — 2026-08-21
+
+### Fixed (Privacy)
+- **Email hashing**: `POST /api/v1/feedback` now stores email addresses as SHA-256 hashes instead of plaintext, as the API docs already promised. Raw email never touches the database.
+
+### Improved
+- MEJORA CONTINUA cycle 14: privacy bug fix — email hashing in feedback endpoint
+- API tests: +2 (email stored as hash, null email stored as null) → 155 total, zero failures
+
+### Coverage
+- API: 100% statements, 99.45% branches, 100% functions, 100% lines (unchanged)
+- Web: 100% statements, 98.41% branches, 100% functions, 100% lines (unchanged)
+- Total tests: 233 (API: 155, Web: 78), zero failures
+
 ## [1.2.0] — 2026-08-16
 
 ### Added

@@ -1,8 +1,8 @@
 {
   "phase": "continuous-improvement",
-  "cycle": 13,
-  "last_completed": "feedback-summary-cycle13",
-  "completed_at": "2026-08-16T00:00:00Z",
+  "cycle": 14,
+  "last_completed": "email-hashing-privacy-fix",
+  "completed_at": "2026-08-21T00:00:00Z",
   "coverage": {
     "api": {
       "statements": 100,
@@ -19,9 +19,9 @@
   },
   "tests": {
     "api": {
-      "passed": 153,
+      "passed": 155,
       "failed": 0,
-      "total": 153
+      "total": 155
     },
     "web": {
       "passed": 78,

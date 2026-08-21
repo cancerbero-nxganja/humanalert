@@ -97,6 +97,58 @@ describe('POST /api/v1/feedback', () => {
 
     expect(res.status).toBe(400);
   });
+
+  it('stores email as SHA-256 hash, not plaintext', async () => {
+    const { createHash } = await import('crypto');
+    const plainEmail = 'test@example.com';
+    const expectedHash = createHash('sha256').update(plainEmail.toLowerCase().trim()).digest('hex');
+
+    const fakeRow = {
+      id: 'uuid-email-hash',
+      source: 'web',
+      context: 'home_page',
+      rating: '4',
+      message: null,
+      email: expectedHash,
+      language: 'en',
+      created_at: new Date().toISOString(),
+    };
+    mockQuery.mockResolvedValueOnce({ rows: [fakeRow], rowCount: 1 });
+
+    await request(app)
+      .post('/api/v1/feedback')
+      .send({ ...validFeedbackPayload, email: plainEmail })
+      .set('Content-Type', 'application/json');
+
+    const callArgs = mockQuery.mock.calls[0][1] as unknown[];
+    const storedEmail = callArgs[5];
+    expect(storedEmail).toBe(expectedHash);
+    expect(storedEmail).not.toBe(plainEmail);
+    expect(typeof storedEmail).toBe('string');
+    expect((storedEmail as string).length).toBe(64);
+  });
+
+  it('stores null when no email provided', async () => {
+    const fakeRow = {
+      id: 'uuid-no-email',
+      source: 'web',
+      context: 'home_page',
+      rating: '4',
+      message: null,
+      email: null,
+      language: 'en',
+      created_at: new Date().toISOString(),
+    };
+    mockQuery.mockResolvedValueOnce({ rows: [fakeRow], rowCount: 1 });
+
+    await request(app)
+      .post('/api/v1/feedback')
+      .send(validFeedbackPayload)
+      .set('Content-Type', 'application/json');
+
+    const callArgs = mockQuery.mock.calls[0][1] as unknown[];
+    expect(callArgs[5]).toBeNull();
+  });
 });
 
 describe('GET /api/v1/feedback', () => {
