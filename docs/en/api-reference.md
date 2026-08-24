@@ -27,13 +27,41 @@ Endpoints without `[JWT]` are public.
 
 ### GET /health
 
-Returns service status. No authentication required.
+Liveness probe — confirms the process is up and the event loop responds. No authentication required. Safe for orchestrator liveness checks (Docker `HEALTHCHECK`, Kubernetes `livenessProbe`).
 
 **Response 200**
 ```json
 {
   "status": "ok",
-  "timestamp": "2026-07-27T00:00:00.000Z"
+  "version": "1.4.0",
+  "timestamp": "2026-07-27T00:00:00.000Z",
+  "service": "humanalert-api"
+}
+```
+
+### GET /health/ready
+
+Readiness probe — confirms the API can reach its database and serve real traffic. No authentication required. Use for Kubernetes `readinessProbe` or load-balancer health checks; a `503` means "don't route traffic to me yet".
+
+**Response 200** — Ready
+```json
+{
+  "status": "ready",
+  "version": "1.4.0",
+  "timestamp": "2026-07-27T00:00:00.000Z",
+  "service": "humanalert-api",
+  "checks": { "database": "ok" }
+}
+```
+
+**Response 503** — Not ready
+```json
+{
+  "status": "not_ready",
+  "version": "1.4.0",
+  "timestamp": "2026-07-27T00:00:00.000Z",
+  "service": "humanalert-api",
+  "checks": { "database": "error" }
 }
 ```
 

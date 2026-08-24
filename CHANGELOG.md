@@ -4,6 +4,27 @@ All notable changes to HumanAlert are documented here.
 
 ## [Unreleased]
 
+## [1.4.0] — 2026-08-24
+
+### Added
+- **Readiness probe**: `GET /api/v1/health/ready` performs a live `SELECT 1` against Postgres and returns `200 { status: "ready", checks: { database: "ok" } }` on success, or `503 { status: "not_ready", checks: { database: "error" } }` when the DB is unreachable. Wire it into Kubernetes `readinessProbe` or a load balancer to stop routing traffic to an instance whose DB is down.
+- `GET /api/v1/health` liveness payload now includes `version` (from `package.json`) and `service` fields, matching what the docs already advertised.
+
+### Fixed
+- **Version drift**: `/api/v1/health` previously returned a hardcoded `"version": "0.1.0"` regardless of the shipped build. The value is now read from `package.json` at runtime, so operators reading the endpoint see the real version. API package version bumped to `1.4.0` to match `CHANGELOG`.
+
+### Docs
+- English `api-reference.md`: `/health` section rewritten to document liveness vs readiness, with response bodies for both `200` and `503` from the new readiness endpoint.
+
+### Improved
+- MEJORA CONTINUA cycle 15: health-endpoint observability & orchestrator readiness
+- API tests: +5 (health dynamic version, no-drift assertion, ready ok, ready db-error, ready timestamp) → 160 total, zero failures
+
+### Coverage
+- API: 100% statements, 99.45% branches, 100% functions, 100% lines
+- Web: 100% statements, 98.41% branches, 100% functions, 100% lines (unchanged)
+- Total tests: 238 (API: 160, Web: 78), zero failures
+
 ## [1.3.0] — 2026-08-21
 
 ### Fixed (Privacy)
