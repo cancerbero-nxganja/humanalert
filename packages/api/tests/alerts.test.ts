@@ -111,6 +111,20 @@ describe('POST /api/v1/alerts', () => {
     expect(res.status).toBe(400);
   });
 
+  it('creates alert with admin token that has no sub (covers req.user?.sub ?? null branch)', async () => {
+    const noSubToken = jwt.sign({ role: 'admin' }, JWT_SECRET, { expiresIn: '1h' });
+    const rowNoSub = { ...fakeAlertRow, created_by: null };
+    mockQuery.mockResolvedValueOnce({ rows: [rowNoSub], rowCount: 1 });
+
+    const res = await request(app)
+      .post('/api/v1/alerts')
+      .set('Authorization', `Bearer ${noSubToken}`)
+      .send(validAlert);
+
+    expect(res.status).toBe(201);
+    expect(mockBroadcast).toHaveBeenCalledWith('alert:new', expect.objectContaining({ type: 'emergency' }));
+  });
+
   it('creates alert with expires_at field set', async () => {
     const expiresAt = new Date(Date.now() + 86400000).toISOString();
     const rowWithExpiry = { ...fakeAlertRow, expires_at: expiresAt };

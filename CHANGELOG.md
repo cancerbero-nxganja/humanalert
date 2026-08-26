@@ -4,6 +4,18 @@ All notable changes to HumanAlert are documented here.
 
 ## [Unreleased]
 
+## [1.5.0] — 2026-08-26
+
+### Improved
+- MEJORA CONTINUA cycle 16: 100% branch coverage achieved in API
+- Added targeted test for `req.user?.sub ?? null` branch in alerts POST (admin token without `sub` field)
+- API branch coverage: 99.45% → 100% (all files now at 100/100/100/100)
+
+### Coverage
+- API: 100% statements, 100% branches, 100% functions, 100% lines
+- Web: 100% statements, 98.41% branches, 100% functions, 100% lines (unchanged)
+- Total tests: 239 (API: 161, Web: 78), zero failures
+
 ## [1.4.0] — 2026-08-24
 
 ### Added
