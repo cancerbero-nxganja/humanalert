@@ -196,6 +196,27 @@ describe('FeedbackWidget', () => {
     expect(await screen.findByRole('status')).toHaveTextContent('Thank you!');
   });
 
+  it('treats as online when navigator is undefined (SSR context)', async () => {
+    const savedNavigator = global.navigator;
+    // @ts-ignore
+    delete global.navigator;
+
+    mockPost.mockResolvedValueOnce(true);
+    render(<FeedbackWidget context="test_ctx" language="en" />);
+    fireEvent.click(screen.getByLabelText('Was this helpful?') ? screen.getByLabelText('Thumbs up — helpful') : screen.getByLabelText('Thumbs up — helpful'));
+    await screen.findByPlaceholderText('Tell us more (optional)');
+
+    await act(async () => {
+      fireEvent.click(screen.getByLabelText('Skip'));
+    });
+
+    // @ts-ignore
+    global.navigator = savedNavigator;
+
+    expect(mockPost).toHaveBeenCalled();
+    expect(await screen.findByRole('status')).toHaveTextContent('Thank you!');
+  });
+
   it('max two interaction steps before done', async () => {
     mockPost.mockResolvedValueOnce(true);
     render(<FeedbackWidget context="test_ctx" language="en" />);

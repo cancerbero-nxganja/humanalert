@@ -4,6 +4,18 @@ All notable changes to HumanAlert are documented here.
 
 ## [Unreleased]
 
+## [1.6.0] — 2026-09-02
+
+### Improved
+- MEJORA CONTINUA cycle 17: 100% branch coverage achieved in web package
+- Added SSR-context test for `FeedbackWidget.tsx` line 42 — `typeof navigator !== 'undefined'` false branch (navigator undefined in server-side render defaults to online=true)
+- Web branch coverage: 98.41% → 100% (all files now at 100/100/100/100)
+
+### Coverage
+- API: 100% statements, 100% branches, 100% functions, 100% lines (unchanged)
+- Web: 100% statements, 100% branches, 100% functions, 100% lines ✓ NEW
+- Total tests: 240 (API: 161, Web: 79), zero failures
+
 ## [1.5.0] — 2026-08-26
 
 ### Improved
