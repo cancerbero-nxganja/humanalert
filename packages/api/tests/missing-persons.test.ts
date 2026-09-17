@@ -217,6 +217,30 @@ describe('GET /api/v1/missing-persons', () => {
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
   });
+
+  it('filters by language without geo', async () => {
+    mockQuery.mockResolvedValueOnce({ rows: [fakeRow], rowCount: 1 });
+
+    const res = await request(app).get('/api/v1/missing-persons?language=de');
+
+    expect(res.status).toBe(200);
+    const sql: string = mockQuery.mock.calls[0][0] as string;
+    expect(sql).toContain('language = $2');
+    const params: unknown[] = mockQuery.mock.calls[0][1] as unknown[];
+    expect(params).toContain('de');
+  });
+
+  it('filters by language with geo', async () => {
+    mockQuery.mockResolvedValueOnce({ rows: [fakeRow], rowCount: 1 });
+
+    const res = await request(app).get('/api/v1/missing-persons?lat=40.7&lon=-74&radius_km=10&language=ar');
+
+    expect(res.status).toBe(200);
+    const sql: string = mockQuery.mock.calls[0][0] as string;
+    expect(sql).toContain('language = $5');
+    const params: unknown[] = mockQuery.mock.calls[0][1] as unknown[];
+    expect(params).toContain('ar');
+  });
 });
 
 describe('GET /api/v1/missing-persons/:id', () => {

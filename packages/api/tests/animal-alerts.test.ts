@@ -186,6 +186,30 @@ describe('GET /api/v1/animal-alerts', () => {
     expect(res.status).toBe(400);
   });
 
+  it('filters by language without geo', async () => {
+    mockQuery.mockResolvedValueOnce({ rows: [{ ...fakeRow, language: 'pt' }], rowCount: 1 });
+
+    const res = await request(app).get('/api/v1/animal-alerts?language=pt');
+
+    expect(res.status).toBe(200);
+    const sql: string = mockQuery.mock.calls[0][0] as string;
+    expect(sql).toContain('language = $2');
+    const params: unknown[] = mockQuery.mock.calls[0][1] as unknown[];
+    expect(params).toContain('pt');
+  });
+
+  it('filters by language with geo', async () => {
+    mockQuery.mockResolvedValueOnce({ rows: [{ ...fakeRow, language: 'ar' }], rowCount: 1 });
+
+    const res = await request(app).get('/api/v1/animal-alerts?lat=40.7&lon=-74&radius_km=5&language=ar');
+
+    expect(res.status).toBe(200);
+    const sql: string = mockQuery.mock.calls[0][0] as string;
+    expect(sql).toContain('language = $5');
+    const params: unknown[] = mockQuery.mock.calls[0][1] as unknown[];
+    expect(params).toContain('ar');
+  });
+
   it('returns 500 on db error', async () => {
     mockQuery.mockRejectedValueOnce(new Error('DB error'));
 

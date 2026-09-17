@@ -55,25 +55,33 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
   const radius_km = req.query.radius_km ? parseFloat(req.query.radius_km as string) : null;
   const status = (req.query.status as string) ?? 'missing';
   const amber_only = req.query.amber_only === 'true';
+  const language = req.query.language as string | undefined;
 
   try {
     let result;
+    const langSuffix = language ? ' AND language = $__LANG__' : '';
     const baseWhere = `status = $1${amber_only ? ' AND amber_alert = TRUE' : ''}`;
 
     if (lat !== null && lon !== null && radius_km !== null && !isNaN(lat) && !isNaN(lon) && !isNaN(radius_km)) {
+      const filled = langSuffix.replace('$__LANG__', '$5');
+      const params: unknown[] = [status, lat, lon, radius_km];
+      if (language) params.push(language);
       result = await query(
         `SELECT * FROM (
            SELECT *, (6371 * acos(LEAST(1.0, cos(radians($2)) * cos(radians(last_seen_lat)) *
              cos(radians(last_seen_lon) - radians($3)) +
              sin(radians($2)) * sin(radians(last_seen_lat))))) AS distance_km
            FROM missing_persons WHERE ${baseWhere}
-         ) sub WHERE distance_km <= $4 ORDER BY amber_alert DESC, created_at DESC LIMIT 200`,
-        [status, lat, lon, radius_km]
+         ) sub WHERE distance_km <= $4${filled} ORDER BY amber_alert DESC, created_at DESC LIMIT 200`,
+        params
       );
     } else {
+      const filled = langSuffix.replace('$__LANG__', '$2');
+      const params: unknown[] = [status];
+      if (language) params.push(language);
       result = await query(
-        `SELECT * FROM missing_persons WHERE ${baseWhere} ORDER BY amber_alert DESC, created_at DESC LIMIT 200`,
-        [status]
+        `SELECT * FROM missing_persons WHERE ${baseWhere}${filled} ORDER BY amber_alert DESC, created_at DESC LIMIT 200`,
+        params
       );
     }
     res.json(result.rows.map(rowToResponse));

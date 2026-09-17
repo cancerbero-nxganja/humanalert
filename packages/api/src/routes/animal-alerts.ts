@@ -42,24 +42,30 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
     return;
   }
 
-  const { lat, lon, radius_km, status } = parsed.data;
+  const { lat, lon, radius_km, status, language } = parsed.data;
   const statusFilter = status ?? 'LOST';
   const hasGeo = lat !== undefined && lon !== undefined && radius_km !== undefined;
 
   try {
     let result;
     if (hasGeo) {
+      const langClause = language ? ` AND language = $5` : '';
+      const params: unknown[] = [lat, lon, statusFilter, radius_km];
+      if (language) params.push(language);
       result = await query(
         `SELECT * FROM (
            SELECT *, (6371 * acos(LEAST(1.0, cos(radians($1)) * cos(radians(last_seen_lat)) * cos(radians(last_seen_lon) - radians($2)) + sin(radians($1)) * sin(radians(last_seen_lat))))) AS distance_km
            FROM animal_alerts WHERE status = $3
-         ) sub WHERE distance_km <= $4 ORDER BY created_at DESC LIMIT 200`,
-        [lat, lon, statusFilter, radius_km]
+         ) sub WHERE distance_km <= $4${langClause} ORDER BY created_at DESC LIMIT 200`,
+        params
       );
     } else {
+      const langClause = language ? ` AND language = $2` : '';
+      const params: unknown[] = [statusFilter];
+      if (language) params.push(language);
       result = await query(
-        `SELECT * FROM animal_alerts WHERE status = $1 ORDER BY created_at DESC LIMIT 200`,
-        [statusFilter]
+        `SELECT * FROM animal_alerts WHERE status = $1${langClause} ORDER BY created_at DESC LIMIT 200`,
+        params
       );
     }
     res.json(result.rows);

@@ -1,8 +1,8 @@
 {
   "phase": "continuous-improvement",
-  "cycle": 17,
-  "last_completed": "full-100-percent-coverage-api-and-web",
-  "completed_at": "2026-09-02T00:00:00Z",
+  "cycle": 18,
+  "last_completed": "language-filter-and-stats-endpoint",
+  "completed_at": "2026-09-17T00:00:00Z",
   "coverage": {
     "api": {
       "statements": 100,
@@ -19,9 +19,9 @@
   },
   "tests": {
     "api": {
-      "passed": 161,
+      "passed": 173,
       "failed": 0,
-      "total": 161
+      "total": 173
     },
     "web": {
       "passed": 79,

@@ -43,28 +43,34 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
     return;
   }
 
-  const { lat, lon, radius_km, category, include_animal_alerts } = parsed.data;
+  const { lat, lon, radius_km, category, include_animal_alerts, language } = parsed.data;
   const hasGeo = lat !== undefined && lon !== undefined && radius_km !== undefined;
 
   try {
     let pinsResult;
     if (hasGeo) {
-      const categoryClause = category ? `AND category = $5` : '';
-      const params: unknown[] = [lat, lon, radius_km, 'active_or_null'];
-      if (category) params.push(category);
+      const extraClauses: string[] = [];
+      const params: unknown[] = [lat, lon, radius_km];
+      if (category) { extraClauses.push(`category = $${params.length + 1}`); params.push(category); }
+      if (language) { extraClauses.push(`language = $${params.length + 1}`); params.push(language); }
+      const andExtra = extraClauses.length ? `AND ${extraClauses.join(' AND ')}` : '';
 
       pinsResult = await query(
         `SELECT *, 'map_pin' AS _type FROM (
            SELECT *, (6371 * acos(LEAST(1.0, cos(radians($1)) * cos(radians(lat)) * cos(radians(lon) - radians($2)) + sin(radians($1)) * sin(radians(lat))))) AS distance_km
            FROM map_pins WHERE (expires_at IS NULL OR expires_at > NOW())
-         ) sub WHERE distance_km <= $3 ${categoryClause} ORDER BY created_at DESC LIMIT 200`,
-        category ? [lat, lon, radius_km, category] : [lat, lon, radius_km]
+         ) sub WHERE distance_km <= $3 ${andExtra} ORDER BY created_at DESC LIMIT 200`,
+        params
       );
     } else {
-      const categoryClause = category ? `AND category = $1` : '';
+      const extraClauses: string[] = [];
+      const params: unknown[] = [];
+      if (category) { extraClauses.push(`category = $${params.length + 1}`); params.push(category); }
+      if (language) { extraClauses.push(`language = $${params.length + 1}`); params.push(language); }
+      const andExtra = extraClauses.length ? `AND ${extraClauses.join(' AND ')}` : '';
       pinsResult = await query(
-        `SELECT *, 'map_pin' AS _type FROM map_pins WHERE (expires_at IS NULL OR expires_at > NOW()) ${categoryClause} ORDER BY created_at DESC LIMIT 200`,
-        category ? [category] : []
+        `SELECT *, 'map_pin' AS _type FROM map_pins WHERE (expires_at IS NULL OR expires_at > NOW()) ${andExtra} ORDER BY created_at DESC LIMIT 200`,
+        params
       );
     }
 

@@ -39,21 +39,28 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
   const lon = req.query.lon ? parseFloat(req.query.lon as string) : null;
   const radius_km = req.query.radius_km ? parseFloat(req.query.radius_km as string) : null;
   const status = (req.query.status as string) ?? 'active';
+  const language = req.query.language as string | undefined;
 
   try {
     let result;
     if (lat !== null && lon !== null && radius_km !== null && !isNaN(lat) && !isNaN(lon) && !isNaN(radius_km)) {
+      const langClause = language ? ` AND language = $5` : '';
+      const params: unknown[] = [lat, lon, status, radius_km];
+      if (language) params.push(language);
       result = await query(
         `SELECT * FROM (
            SELECT *, (6371 * acos(LEAST(1.0, cos(radians($1)) * cos(radians(lat)) * cos(radians(lon) - radians($2)) + sin(radians($1)) * sin(radians(lat))))) AS distance_km
            FROM alerts WHERE status = $3
-         ) sub WHERE distance_km <= $4 ORDER BY created_at DESC LIMIT 200`,
-        [lat, lon, status, radius_km]
+         ) sub WHERE distance_km <= $4${langClause} ORDER BY created_at DESC LIMIT 200`,
+        params
       );
     } else {
+      const langClause = language ? ` AND language = $2` : '';
+      const params: unknown[] = [status];
+      if (language) params.push(language);
       result = await query(
-        `SELECT * FROM alerts WHERE status = $1 ORDER BY created_at DESC LIMIT 200`,
-        [status]
+        `SELECT * FROM alerts WHERE status = $1${langClause} ORDER BY created_at DESC LIMIT 200`,
+        params
       );
     }
     res.json(result.rows);

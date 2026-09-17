@@ -39,6 +39,7 @@ export const MapPinGeoQuerySchema = z.object({
   radius_km: z.coerce.number().positive().max(500).optional(),
   category: MapPinCategorySchema.optional(),
   include_animal_alerts: z.coerce.boolean().optional(),
+  language: z.string().min(2).max(10).optional(),
 });
 
 export type CreateMapPinInput = z.infer<typeof CreateMapPinSchema>;

@@ -4,6 +4,21 @@ All notable changes to HumanAlert are documented here.
 
 ## [Unreleased]
 
+## [1.7.0] — 2026-09-17
+
+### Added
+- **Language filter** on all public GET list endpoints: `GET /api/v1/alerts`, `GET /api/v1/animal-alerts`, `GET /api/v1/missing-persons`, `GET /api/v1/map-pins` now accept `?language=` (ISO code) to narrow results to a single locale. Works with and without geo filter.
+- **`GET /api/v1/stats`** — public, no-auth endpoint returning live counts: `active_alerts`, `missing_persons`, `lost_animals`, `active_map_pins`, `generated_at`. Useful for dashboards, ops monitoring, and external integrations.
+
+### Improved
+- MEJORA CONTINUA cycle 18: language filter for i18n UX + public stats endpoint
+- API tests: +12 (language filter tests for all 4 entity types × 2 branches each + 3 stats tests) → 173 total, zero failures
+
+### Coverage
+- API: 100% statements, 100% branches, 100% functions, 100% lines ✓
+- Web: 100% statements, 100% branches, 100% functions, 100% lines ✓ (unchanged)
+- Total tests: 252 (API: 173, Web: 79), zero failures
+
 ## [1.6.0] — 2026-09-02
 
 ### Improved

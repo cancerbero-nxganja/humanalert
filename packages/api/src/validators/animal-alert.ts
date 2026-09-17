@@ -26,6 +26,7 @@ export const GeoQuerySchema = z.object({
   lon: z.coerce.number().min(-180).max(180).optional(),
   radius_km: z.coerce.number().positive().max(500).optional(),
   status: AnimalAlertStatusSchema.optional(),
+  language: z.string().min(2).max(10).optional(),
 });
 
 export type CreateAnimalAlertInput = z.infer<typeof CreateAnimalAlertSchema>;
