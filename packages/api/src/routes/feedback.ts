@@ -38,18 +38,27 @@ router.post('/', feedbackRateLimiter, async (req: Request, res: Response): Promi
 
 router.get('/summary', requireAdmin, async (_req: Request, res: Response): Promise<void> => {
   try {
-    const totalResult = await query(`SELECT COUNT(*) AS total FROM feedback`);
-    const total = parseInt(String(totalResult.rows[0].total), 10);
+    const [totalResult, byContextResult, byLanguageResult] = await Promise.all([
+      query(`SELECT COUNT(*) AS total FROM feedback`),
+      query(
+        `SELECT context,
+                COUNT(*) AS count,
+                ROUND(AVG(CASE WHEN rating ~ '^[1-5]$' THEN rating::numeric END), 2) AS avg_rating
+         FROM feedback
+         GROUP BY context
+         ORDER BY count DESC
+         LIMIT 20`
+      ),
+      query(
+        `SELECT language, COUNT(*) AS count
+         FROM feedback
+         GROUP BY language
+         ORDER BY count DESC
+         LIMIT 50`
+      ),
+    ]);
 
-    const byContextResult = await query(
-      `SELECT context,
-              COUNT(*) AS count,
-              ROUND(AVG(CASE WHEN rating ~ '^[1-5]$' THEN rating::numeric END), 2) AS avg_rating
-       FROM feedback
-       GROUP BY context
-       ORDER BY count DESC
-       LIMIT 20`
-    );
+    const total = parseInt(String(totalResult.rows[0].total), 10);
 
     res.json({
       total,
@@ -58,6 +67,10 @@ router.get('/summary', requireAdmin, async (_req: Request, res: Response): Promi
         count: parseInt(String(r.count), 10),
         avg_rating: r.avg_rating != null ? parseFloat(String(r.avg_rating)) : null,
       })),
+      by_language: byLanguageResult.rows.map((r) => ({
+        language: String(r.language),
+        count: parseInt(String(r.count), 10),
+      })),
     });
   } catch (err) {
     console.error('Failed to fetch feedback summary:', err);
@@ -65,12 +78,20 @@ router.get('/summary', requireAdmin, async (_req: Request, res: Response): Promi
   }
 });
 
-router.get('/', requireAdmin, async (_req: Request, res: Response): Promise<void> => {
+router.get('/', requireAdmin, async (req: Request, res: Response): Promise<void> => {
+  const rawLimit = parseInt(String(req.query.limit ?? '50'), 10);
+  const rawOffset = parseInt(String(req.query.offset ?? '0'), 10);
+  const limit = Math.min(Math.max(isNaN(rawLimit) ? 50 : rawLimit, 1), 200);
+  const offset = Math.max(isNaN(rawOffset) ? 0 : rawOffset, 0);
+
   try {
-    const result = await query(
-      `SELECT * FROM feedback ORDER BY created_at DESC LIMIT 100`
-    );
-    res.json(result.rows);
+    const [countResult, itemsResult] = await Promise.all([
+      query(`SELECT COUNT(*) AS total FROM feedback`),
+      query(`SELECT * FROM feedback ORDER BY created_at DESC LIMIT $1 OFFSET $2`, [limit, offset]),
+    ]);
+
+    const total = parseInt(String(countResult.rows[0].total), 10);
+    res.json({ items: itemsResult.rows, total, limit, offset });
   } catch (err) {
     console.error('Failed to fetch feedback:', err);
     res.status(500).json({ error: 'Internal server error' });

@@ -60,7 +60,8 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
   try {
     let result;
     const langSuffix = language ? ' AND language = $__LANG__' : '';
-    const baseWhere = `status = $1${amber_only ? ' AND amber_alert = TRUE' : ''}`;
+    const expiryClause = status === 'missing' ? ' AND (expires_at IS NULL OR expires_at > NOW())' : '';
+    const baseWhere = `status = $1${amber_only ? ' AND amber_alert = TRUE' : ''}${expiryClause}`;
 
     if (lat !== null && lon !== null && radius_km !== null && !isNaN(lat) && !isNaN(lon) && !isNaN(radius_km)) {
       const filled = langSuffix.replace('$__LANG__', '$5');

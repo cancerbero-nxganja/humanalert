@@ -241,6 +241,33 @@ describe('GET /api/v1/missing-persons', () => {
     const params: unknown[] = mockQuery.mock.calls[0][1] as unknown[];
     expect(params).toContain('ar');
   });
+
+  it('applies expiry filter when status is missing (no geo)', async () => {
+    mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 });
+
+    await request(app).get('/api/v1/missing-persons');
+
+    const sql: string = mockQuery.mock.calls[0][0] as string;
+    expect(sql).toContain('expires_at IS NULL OR expires_at > NOW()');
+  });
+
+  it('applies expiry filter when status is missing (geo)', async () => {
+    mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 });
+
+    await request(app).get('/api/v1/missing-persons?lat=40.7&lon=-74&radius_km=10');
+
+    const sql: string = mockQuery.mock.calls[0][0] as string;
+    expect(sql).toContain('expires_at IS NULL OR expires_at > NOW()');
+  });
+
+  it('omits expiry filter when status is case_closed', async () => {
+    mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 });
+
+    await request(app).get('/api/v1/missing-persons?status=case_closed');
+
+    const sql: string = mockQuery.mock.calls[0][0] as string;
+    expect(sql).not.toContain('expires_at IS NULL OR expires_at > NOW()');
+  });
 });
 
 describe('GET /api/v1/missing-persons/:id', () => {

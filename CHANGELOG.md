@@ -4,6 +4,26 @@ All notable changes to HumanAlert are documented here.
 
 ## [Unreleased]
 
+## [1.8.0] — 2026-10-13
+
+### Added
+- **Auto-expiry filtering** on `GET /api/v1/alerts`: when `status=active` (the default), expired records (`expires_at <= NOW()`) are automatically excluded. Operators requesting `status=resolved` still see all historical records.
+- **Auto-expiry filtering** on `GET /api/v1/missing-persons`: same logic — active `status=missing` queries exclude records past their `expires_at`.
+- **Feedback pagination** on `GET /api/v1/feedback` (admin): accepts `?limit=` (default 50, max 200) and `?offset=` (default 0). Response is now `{ items, total, limit, offset }` instead of a bare array, enabling UI pagination controls.
+- **Language breakdown** in `GET /api/v1/feedback/summary` (admin): `by_language` array shows `{ language, count }` ranked by volume, giving a quick view of which locales are most active in feedback.
+
+### Fixed
+- **Stats expiry bug**: `GET /api/v1/stats` `active_alerts` and `missing_persons` counts now exclude expired records, matching the behaviour of the list endpoints. Previously these counts could include stale entries.
+
+### Improved
+- MEJORA CONTINUA cycle 19: expiry enforcement + feedback pagination + language analytics
+- API tests: +10 → 183 total, zero failures
+
+### Coverage
+- API: 100% statements, 100% branches, 100% functions, 100% lines ✓
+- Web: 100% statements, 100% branches, 100% functions, 100% lines ✓ (unchanged)
+- Total tests: 262 (API: 183, Web: 79), zero failures
+
 ## [1.7.0] — 2026-09-17
 
 ### Added

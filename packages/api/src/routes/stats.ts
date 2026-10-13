@@ -7,8 +7,8 @@ const router = Router();
 router.get('/', async (_req: Request, res: Response): Promise<void> => {
   try {
     const [alerts, missingPersons, animalAlerts, mapPins] = await Promise.all([
-      query<{ count: string }>(`SELECT COUNT(*) AS count FROM alerts WHERE status = 'active'`),
-      query<{ count: string }>(`SELECT COUNT(*) AS count FROM missing_persons WHERE status = 'missing'`),
+      query<{ count: string }>(`SELECT COUNT(*) AS count FROM alerts WHERE status = 'active' AND (expires_at IS NULL OR expires_at > NOW())`),
+      query<{ count: string }>(`SELECT COUNT(*) AS count FROM missing_persons WHERE status = 'missing' AND (expires_at IS NULL OR expires_at > NOW())`),
       query<{ count: string }>(`SELECT COUNT(*) AS count FROM animal_alerts WHERE status = 'LOST'`),
       query<{ count: string }>(`SELECT COUNT(*) AS count FROM map_pins WHERE (expires_at IS NULL OR expires_at > NOW())`),
     ]);

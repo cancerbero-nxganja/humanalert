@@ -181,19 +181,68 @@ describe('GET /api/v1/feedback', () => {
     expect(res.status).toBe(403);
   });
 
-  it('returns array of feedback with valid admin JWT', async () => {
+  it('returns paginated feedback with valid admin JWT', async () => {
     const rows = [
       { id: 'uuid-1', source: 'web', context: 'home', rating: '5', language: 'en', created_at: new Date().toISOString() },
     ];
-    mockQuery.mockResolvedValueOnce({ rows, rowCount: 1 });
+    mockQuery
+      .mockResolvedValueOnce({ rows: [{ total: '42' }], rowCount: 1 })
+      .mockResolvedValueOnce({ rows, rowCount: 1 });
 
     const res = await request(app)
       .get('/api/v1/feedback')
       .set('Authorization', `Bearer ${makeAdminToken()}`);
 
     expect(res.status).toBe(200);
-    expect(Array.isArray(res.body)).toBe(true);
-    expect(res.body.length).toBeGreaterThan(0);
+    expect(Array.isArray(res.body.items)).toBe(true);
+    expect(res.body.total).toBe(42);
+    expect(res.body.limit).toBe(50);
+    expect(res.body.offset).toBe(0);
+  });
+
+  it('accepts custom limit and offset', async () => {
+    mockQuery
+      .mockResolvedValueOnce({ rows: [{ total: '100' }], rowCount: 1 })
+      .mockResolvedValueOnce({ rows: [], rowCount: 0 });
+
+    const res = await request(app)
+      .get('/api/v1/feedback?limit=10&offset=20')
+      .set('Authorization', `Bearer ${makeAdminToken()}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.limit).toBe(10);
+    expect(res.body.offset).toBe(20);
+    expect(res.body.total).toBe(100);
+    const params: unknown[] = mockQuery.mock.calls[1][1] as unknown[];
+    expect(params[0]).toBe(10);
+    expect(params[1]).toBe(20);
+  });
+
+  it('clamps limit to max 200', async () => {
+    mockQuery
+      .mockResolvedValueOnce({ rows: [{ total: '0' }], rowCount: 1 })
+      .mockResolvedValueOnce({ rows: [], rowCount: 0 });
+
+    const res = await request(app)
+      .get('/api/v1/feedback?limit=999')
+      .set('Authorization', `Bearer ${makeAdminToken()}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.limit).toBe(200);
+  });
+
+  it('defaults limit to 50 and offset to 0 when non-numeric values are given', async () => {
+    mockQuery
+      .mockResolvedValueOnce({ rows: [{ total: '0' }], rowCount: 1 })
+      .mockResolvedValueOnce({ rows: [], rowCount: 0 });
+
+    const res = await request(app)
+      .get('/api/v1/feedback?limit=abc&offset=xyz')
+      .set('Authorization', `Bearer ${makeAdminToken()}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.limit).toBe(50);
+    expect(res.body.offset).toBe(0);
   });
 });
 
@@ -253,6 +302,13 @@ describe('GET /api/v1/feedback/summary', () => {
           { context: 'alert_sent', count: '12', avg_rating: null },
         ],
         rowCount: 2,
+      })
+      .mockResolvedValueOnce({
+        rows: [
+          { language: 'en', count: '25' },
+          { language: 'es', count: '17' },
+        ],
+        rowCount: 2,
       });
 
     const res = await request(app)
@@ -264,6 +320,8 @@ describe('GET /api/v1/feedback/summary', () => {
     expect(Array.isArray(res.body.by_context)).toBe(true);
     expect(res.body.by_context[0]).toMatchObject({ context: 'home_page', count: 30, avg_rating: 4.5 });
     expect(res.body.by_context[1].avg_rating).toBeNull();
+    expect(Array.isArray(res.body.by_language)).toBe(true);
+    expect(res.body.by_language[0]).toMatchObject({ language: 'en', count: 25 });
   });
 
   it('returns 500 when DB fails', async () => {

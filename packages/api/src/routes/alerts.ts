@@ -40,6 +40,7 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
   const radius_km = req.query.radius_km ? parseFloat(req.query.radius_km as string) : null;
   const status = (req.query.status as string) ?? 'active';
   const language = req.query.language as string | undefined;
+  const expiryClause = status === 'active' ? ' AND (expires_at IS NULL OR expires_at > NOW())' : '';
 
   try {
     let result;
@@ -50,7 +51,7 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
       result = await query(
         `SELECT * FROM (
            SELECT *, (6371 * acos(LEAST(1.0, cos(radians($1)) * cos(radians(lat)) * cos(radians(lon) - radians($2)) + sin(radians($1)) * sin(radians(lat))))) AS distance_km
-           FROM alerts WHERE status = $3
+           FROM alerts WHERE status = $3${expiryClause}
          ) sub WHERE distance_km <= $4${langClause} ORDER BY created_at DESC LIMIT 200`,
         params
       );
@@ -59,7 +60,7 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
       const params: unknown[] = [status];
       if (language) params.push(language);
       result = await query(
-        `SELECT * FROM alerts WHERE status = $1${langClause} ORDER BY created_at DESC LIMIT 200`,
+        `SELECT * FROM alerts WHERE status = $1${expiryClause}${langClause} ORDER BY created_at DESC LIMIT 200`,
         params
       );
     }

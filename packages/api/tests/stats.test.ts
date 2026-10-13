@@ -62,4 +62,20 @@ describe('GET /api/v1/stats', () => {
     expect(res.status).toBe(500);
     expect(res.body).toMatchObject({ error: 'Internal server error' });
   });
+
+  it('SQL for alerts count includes expiry filter', async () => {
+    mockQuery
+      .mockResolvedValueOnce({ rows: [{ count: '5' }], rowCount: 1 })
+      .mockResolvedValueOnce({ rows: [{ count: '3' }], rowCount: 1 })
+      .mockResolvedValueOnce({ rows: [{ count: '2' }], rowCount: 1 })
+      .mockResolvedValueOnce({ rows: [{ count: '10' }], rowCount: 1 });
+
+    await request(app).get('/api/v1/stats');
+
+    const calls = mockQuery.mock.calls as Array<[string, ...unknown[]]>;
+    const alertSql = calls[0][0];
+    const missingPersonSql = calls[1][0];
+    expect(alertSql).toContain('expires_at IS NULL OR expires_at > NOW()');
+    expect(missingPersonSql).toContain('expires_at IS NULL OR expires_at > NOW()');
+  });
 });
