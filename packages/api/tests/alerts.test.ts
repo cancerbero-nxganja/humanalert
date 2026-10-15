@@ -222,6 +222,67 @@ describe('GET /api/v1/alerts', () => {
     const sql: string = mockQuery.mock.calls[0][0] as string;
     expect(sql).not.toContain('expires_at IS NULL OR expires_at > NOW()');
   });
+
+  it('filters by type without geo', async () => {
+    mockQuery.mockResolvedValueOnce({ rows: [{ ...fakeAlertRow, type: 'flood' }], rowCount: 1 });
+
+    const res = await request(app).get('/api/v1/alerts?type=flood');
+
+    expect(res.status).toBe(200);
+    const sql: string = mockQuery.mock.calls[0][0] as string;
+    const params: unknown[] = mockQuery.mock.calls[0][1] as unknown[];
+    expect(sql).toContain('type = $');
+    expect(params).toContain('flood');
+  });
+
+  it('filters by severity without geo', async () => {
+    mockQuery.mockResolvedValueOnce({ rows: [{ ...fakeAlertRow, severity: 'critical' }], rowCount: 1 });
+
+    const res = await request(app).get('/api/v1/alerts?severity=critical');
+
+    expect(res.status).toBe(200);
+    const sql: string = mockQuery.mock.calls[0][0] as string;
+    const params: unknown[] = mockQuery.mock.calls[0][1] as unknown[];
+    expect(sql).toContain('severity = $');
+    expect(params).toContain('critical');
+  });
+
+  it('combines type and severity filters without geo', async () => {
+    mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 });
+
+    await request(app).get('/api/v1/alerts?type=earthquake&severity=high');
+
+    const sql: string = mockQuery.mock.calls[0][0] as string;
+    const params: unknown[] = mockQuery.mock.calls[0][1] as unknown[];
+    expect(sql).toContain('type = $');
+    expect(sql).toContain('severity = $');
+    expect(params).toContain('earthquake');
+    expect(params).toContain('high');
+  });
+
+  it('filters by type with geo', async () => {
+    mockQuery.mockResolvedValueOnce({ rows: [{ ...fakeAlertRow, type: 'emergency' }], rowCount: 1 });
+
+    const res = await request(app).get('/api/v1/alerts?lat=40.7&lon=-74&radius_km=10&type=emergency');
+
+    expect(res.status).toBe(200);
+    const sql: string = mockQuery.mock.calls[0][0] as string;
+    const params: unknown[] = mockQuery.mock.calls[0][1] as unknown[];
+    expect(sql).toContain('type = $');
+    expect(params).toContain('emergency');
+  });
+
+  it('filters by severity with geo', async () => {
+    mockQuery.mockResolvedValueOnce({ rows: [{ ...fakeAlertRow, severity: 'critical' }], rowCount: 1 });
+
+    const res = await request(app).get('/api/v1/alerts?lat=40.7&lon=-74&radius_km=10&severity=critical');
+
+    expect(res.status).toBe(200);
+    const sql: string = mockQuery.mock.calls[0][0] as string;
+    const params: unknown[] = mockQuery.mock.calls[0][1] as unknown[];
+    expect(sql).toContain('severity = $');
+    expect(params).toContain('critical');
+  });
 });
 
 describe('GET /api/v1/alerts/:id', () => {

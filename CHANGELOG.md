@@ -4,6 +4,23 @@ All notable changes to HumanAlert are documented here.
 
 ## [Unreleased]
 
+## [1.9.0] — 2026-10-15
+
+### Added
+- **Alert type filter**: `GET /api/v1/alerts` now accepts `?type=<value>` to narrow results to a specific alert type (e.g. `?type=flood`). Works with and without geo filter.
+- **Alert severity filter**: `GET /api/v1/alerts` now accepts `?severity=<value>` to narrow results by severity level (e.g. `?severity=critical`). Combinable with `?type=` and existing `?status=`, `?language=`, geo filters.
+- **Feedback admin source filter**: `GET /api/v1/feedback` (admin) now accepts `?source=app|web|landing` to narrow results to a specific submission source.
+- **Feedback admin date range filter**: `GET /api/v1/feedback` (admin) now accepts `?from=<ISO date>` and `?to=<ISO date>` to narrow results to a time window. All three filters combine freely with existing `?limit=` and `?offset=` pagination.
+
+### Improved
+- MEJORA CONTINUA cycle 20: alert type/severity filter + feedback admin date/source filter
+- API tests: +9 → 192 total, zero failures
+
+### Coverage
+- API: 100% statements, 100% branches, 100% functions, 100% lines ✓
+- Web: 100% statements, 100% branches, 100% functions, 100% lines ✓ (unchanged)
+- Total tests: 271 (API: 192, Web: 79), zero failures
+
 ## [1.8.0] — 2026-10-13
 
 ### Added

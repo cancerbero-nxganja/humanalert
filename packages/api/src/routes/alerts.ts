@@ -40,27 +40,35 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
   const radius_km = req.query.radius_km ? parseFloat(req.query.radius_km as string) : null;
   const status = (req.query.status as string) ?? 'active';
   const language = req.query.language as string | undefined;
-  const expiryClause = status === 'active' ? ' AND (expires_at IS NULL OR expires_at > NOW())' : '';
+  const type = req.query.type as string | undefined;
+  const severity = req.query.severity as string | undefined;
+  const applyExpiry = status === 'active';
+  const expiryClause = applyExpiry ? ' AND (expires_at IS NULL OR expires_at > NOW())' : '';
 
   try {
     let result;
     if (lat !== null && lon !== null && radius_km !== null && !isNaN(lat) && !isNaN(lon) && !isNaN(radius_km)) {
-      const langClause = language ? ` AND language = $5` : '';
       const params: unknown[] = [lat, lon, status, radius_km];
-      if (language) params.push(language);
+      const outerClauses: string[] = ['distance_km <= $4'];
+      if (language) { outerClauses.push(`language = $${params.length + 1}`); params.push(language); }
+      if (type) { outerClauses.push(`type = $${params.length + 1}`); params.push(type); }
+      if (severity) { outerClauses.push(`severity = $${params.length + 1}`); params.push(severity); }
       result = await query(
         `SELECT * FROM (
            SELECT *, (6371 * acos(LEAST(1.0, cos(radians($1)) * cos(radians(lat)) * cos(radians(lon) - radians($2)) + sin(radians($1)) * sin(radians(lat))))) AS distance_km
            FROM alerts WHERE status = $3${expiryClause}
-         ) sub WHERE distance_km <= $4${langClause} ORDER BY created_at DESC LIMIT 200`,
+         ) sub WHERE ${outerClauses.join(' AND ')} ORDER BY created_at DESC LIMIT 200`,
         params
       );
     } else {
-      const langClause = language ? ` AND language = $2` : '';
       const params: unknown[] = [status];
-      if (language) params.push(language);
+      const conditions: string[] = ['status = $1'];
+      if (applyExpiry) conditions.push('(expires_at IS NULL OR expires_at > NOW())');
+      if (language) { conditions.push(`language = $${params.length + 1}`); params.push(language); }
+      if (type) { conditions.push(`type = $${params.length + 1}`); params.push(type); }
+      if (severity) { conditions.push(`severity = $${params.length + 1}`); params.push(severity); }
       result = await query(
-        `SELECT * FROM alerts WHERE status = $1${expiryClause}${langClause} ORDER BY created_at DESC LIMIT 200`,
+        `SELECT * FROM alerts WHERE ${conditions.join(' AND ')} ORDER BY created_at DESC LIMIT 200`,
         params
       );
     }

@@ -244,6 +244,77 @@ describe('GET /api/v1/feedback', () => {
     expect(res.body.limit).toBe(50);
     expect(res.body.offset).toBe(0);
   });
+
+  it('filters by source=app', async () => {
+    mockQuery
+      .mockResolvedValueOnce({ rows: [{ total: '7' }], rowCount: 1 })
+      .mockResolvedValueOnce({ rows: [], rowCount: 0 });
+
+    const res = await request(app)
+      .get('/api/v1/feedback?source=app')
+      .set('Authorization', `Bearer ${makeAdminToken()}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.total).toBe(7);
+    const countSql: string = mockQuery.mock.calls[0][0] as string;
+    const countParams: unknown[] = mockQuery.mock.calls[0][1] as unknown[];
+    expect(countSql).toContain('source = $1');
+    expect(countParams).toContain('app');
+  });
+
+  it('filters by from date', async () => {
+    mockQuery
+      .mockResolvedValueOnce({ rows: [{ total: '3' }], rowCount: 1 })
+      .mockResolvedValueOnce({ rows: [], rowCount: 0 });
+
+    const res = await request(app)
+      .get('/api/v1/feedback?from=2025-01-01')
+      .set('Authorization', `Bearer ${makeAdminToken()}`);
+
+    expect(res.status).toBe(200);
+    const countSql: string = mockQuery.mock.calls[0][0] as string;
+    const countParams: unknown[] = mockQuery.mock.calls[0][1] as unknown[];
+    expect(countSql).toContain('created_at >= $1');
+    expect(countParams).toContain('2025-01-01');
+  });
+
+  it('filters by to date', async () => {
+    mockQuery
+      .mockResolvedValueOnce({ rows: [{ total: '5' }], rowCount: 1 })
+      .mockResolvedValueOnce({ rows: [], rowCount: 0 });
+
+    const res = await request(app)
+      .get('/api/v1/feedback?to=2025-12-31')
+      .set('Authorization', `Bearer ${makeAdminToken()}`);
+
+    expect(res.status).toBe(200);
+    const countSql: string = mockQuery.mock.calls[0][0] as string;
+    const countParams: unknown[] = mockQuery.mock.calls[0][1] as unknown[];
+    expect(countSql).toContain('created_at <= $1');
+    expect(countParams).toContain('2025-12-31');
+  });
+
+  it('combines source, from, and to filters', async () => {
+    mockQuery
+      .mockResolvedValueOnce({ rows: [{ total: '2' }], rowCount: 1 })
+      .mockResolvedValueOnce({ rows: [], rowCount: 0 });
+
+    const res = await request(app)
+      .get('/api/v1/feedback?source=web&from=2025-01-01&to=2025-06-30')
+      .set('Authorization', `Bearer ${makeAdminToken()}`);
+
+    expect(res.status).toBe(200);
+    const countSql: string = mockQuery.mock.calls[0][0] as string;
+    const countParams: unknown[] = mockQuery.mock.calls[0][1] as unknown[];
+    expect(countSql).toContain('source = $1');
+    expect(countSql).toContain('created_at >= $2');
+    expect(countSql).toContain('created_at <= $3');
+    expect(countParams).toEqual(['web', '2025-01-01', '2025-06-30']);
+    // limit/offset params follow the filter params in the items query
+    const itemsParams: unknown[] = mockQuery.mock.calls[1][1] as unknown[];
+    expect(itemsParams[3]).toBe(50);  // limit default
+    expect(itemsParams[4]).toBe(0);   // offset default
+  });
 });
 
 describe('GET /api/v1/health', () => {

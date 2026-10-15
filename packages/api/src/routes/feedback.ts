@@ -83,11 +83,24 @@ router.get('/', requireAdmin, async (req: Request, res: Response): Promise<void>
   const rawOffset = parseInt(String(req.query.offset ?? '0'), 10);
   const limit = Math.min(Math.max(isNaN(rawLimit) ? 50 : rawLimit, 1), 200);
   const offset = Math.max(isNaN(rawOffset) ? 0 : rawOffset, 0);
+  const source = req.query.source as string | undefined;
+  const from = req.query.from as string | undefined;
+  const to = req.query.to as string | undefined;
+
+  const filterParams: unknown[] = [];
+  const conditions: string[] = [];
+  if (source) { conditions.push(`source = $${filterParams.length + 1}`); filterParams.push(source); }
+  if (from) { conditions.push(`created_at >= $${filterParams.length + 1}`); filterParams.push(from); }
+  if (to) { conditions.push(`created_at <= $${filterParams.length + 1}`); filterParams.push(to); }
+  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
   try {
     const [countResult, itemsResult] = await Promise.all([
-      query(`SELECT COUNT(*) AS total FROM feedback`),
-      query(`SELECT * FROM feedback ORDER BY created_at DESC LIMIT $1 OFFSET $2`, [limit, offset]),
+      query(`SELECT COUNT(*) AS total FROM feedback ${whereClause}`, filterParams),
+      query(
+        `SELECT * FROM feedback ${whereClause} ORDER BY created_at DESC LIMIT $${filterParams.length + 1} OFFSET $${filterParams.length + 2}`,
+        [...filterParams, limit, offset],
+      ),
     ]);
 
     const total = parseInt(String(countResult.rows[0].total), 10);
